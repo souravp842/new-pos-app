@@ -19,7 +19,7 @@ model Session {
   state         String
   isOnline      Boolean   @default(false)
   scope         String?
-  expires       DateTime?
+  expires       DateTime?  @default(now())
   accessToken   String
   userId        BigInt?
   firstName     String?
@@ -29,4 +29,50 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
+}
+
+
+model Contract {
+  id          Int      @id @default(autoincrement())
+  name        String
+  content     String   
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  shop        String
+  
+  // Relationship to SKU mappings
+  skuMappings ContractSkuMapping[]
+  
+  // Relationship to signed contracts
+  signedContracts SignedContract[]
+}
+
+model ContractSkuMapping {
+  id         Int      @id @default(autoincrement())
+  contractId Int
+  sku        String
+  productId  String?
+  variantId  String?
+  createdAt  DateTime @default(now())
+  
+  // Relationship to contract
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  
+  @@unique([contractId, sku])
+}
+
+model SignedContract {
+  id              Int      @id @default(autoincrement())
+  contractId      Int
+  orderId         String?
+  customerEmail   String?
+  customerName    String?
+  signatureData   String   
+  signedAt        DateTime @default(now())
+  ipAddress       String?
+  shop            String
+  
+  // Relationship to contract
+  contract        Contract @relation(fields: [contractId], references: [id])
 }

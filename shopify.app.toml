@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "32ae6506402553d77b71df6408e4dee0"
-name = "Contract Signing"
-handle = "contract-signing"
+client_id = "151099fbf3be787c0f60401010d0bcf5"
+name = "pos-app"
+handle = "pos-app-66"
 application_url = "https://new-pos-app.onrender.com"
 embedded = true
 

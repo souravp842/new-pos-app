@@ -7,7 +7,7 @@ type = "ui_extension"
 name = "pos-ui-draft-order-details"
 
 handle = "pos-ui-draft-order-details"
-description = "A react POS UI extension"
+description = "Contract Signing"
 
 # Controls where in POS your extension will be injected,
 # and the file that contains your extension’s source code.

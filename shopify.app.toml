@@ -3,7 +3,7 @@
 client_id = "151099fbf3be787c0f60401010d0bcf5"
 name = "pos-app"
 handle = "pos-app-66"
-application_url = "https://dom-maintenance-suzuki-celebration.trycloudflare.com"
+application_url = "https://new-pos-app.onrender.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-07"
 scopes = "write_products"
 
 [auth]
-redirect_urls = ["https://dom-maintenance-suzuki-celebration.trycloudflare.com/auth/callback", "https://dom-maintenance-suzuki-celebration.trycloudflare.com/auth/shopify/callback", "https://dom-maintenance-suzuki-celebration.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://new-pos-app.onrender.com/auth/callback", "https://new-pos-app.onrender.com/auth/shopify/callback", "https://new-pos-app.onrender.com/api/auth/callback"]
 
 [pos]
 embedded = false

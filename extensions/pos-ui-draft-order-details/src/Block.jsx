@@ -12,12 +12,12 @@ const Block = () => {
   const api = useApi();
   
   return (
-    <POSBlock action={{title: 'Open action', onPress: api.action.presentModal}}>
+   
       <POSBlockRow>
-        <Text>{'This is a block extension'}</Text>
-        <Text>{`Draft Order ID for this draft order: ${api.draftOrder.id}`}</Text>
+        <Text>{'Test contract'}</Text>
+        {/* <Text>{`Draft Order ID for this draft order: ${api.draftOrder.id}`}</Text> */}
       </POSBlockRow>
-    </POSBlock>
+  
   );
 };
 

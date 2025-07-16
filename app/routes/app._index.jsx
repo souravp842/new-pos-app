@@ -148,14 +148,6 @@ export default function AppIndex() {
                     Select which products or variants should trigger the contract signing process.
                   </Text>
                 </Box>
-                <Box>
-                  <Text variant="bodyMd" fontWeight="semibold">
-                    3. Install POS Extension (Coming Soon)
-                  </Text>
-                  <Text variant="bodyMd" color="subdued">
-                    The contract will automatically appear on your POS when customers purchase linked products.
-                  </Text>
-                </Box>
               </BlockStack>
             </BlockStack>
           </Card>

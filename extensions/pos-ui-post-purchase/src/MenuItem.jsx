@@ -12,6 +12,6 @@ const ButtonComponent = () => {
 };
 
 export default reactExtension(
-  'pos.draft-order-details.action.menu-item.render',
+  'pos.purchase.post.action.menu-item.render',
   () => <ButtonComponent />,
 );

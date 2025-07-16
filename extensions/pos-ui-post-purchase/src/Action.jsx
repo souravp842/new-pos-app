@@ -5,8 +5,8 @@ import {
   Screen,
   ScrollView,
   Navigator,
-  reactExtension,
   useApi,
+  reactExtension,
 } from '@shopify/ui-extensions-react/point-of-sale';
 
 const Modal = () => {
@@ -14,15 +14,15 @@ const Modal = () => {
   
   return (
     <Navigator>
-      <Screen name="DraftOrderDetailsAction" title="Draft Order Details Action">
+      <Screen name="PostPurchaseAction" title="Post Purchase Action">
         <ScrollView>
-          <Text>{`Draft Order ID: ${api.draftOrder.id}`}</Text>
+          <Text>{`Order ID for complete checkout: ${api.order.id}`}</Text>
         </ScrollView>
       </Screen>
     </Navigator>
   );
 };
 
-export default reactExtension('pos.draft-order-details.action.render', () => (
+export default reactExtension('pos.purchase.post.action.render', () => (
   <Modal />
 ));

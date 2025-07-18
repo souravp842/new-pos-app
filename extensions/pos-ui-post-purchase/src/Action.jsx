@@ -19,16 +19,22 @@ function ContractScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [skus, setSkus] = useState([]);
+ const [showDebug, setShowDebug] = useState(true);
+const [contractResponse, setContractResponse] = useState(null);
+const [skuContractResponse, setSkuContractResponse] = useState(null); // 🆕 for /api/contract-by-skus
+
+
 
   // 1. Get SKUs from backend via order ID
   useEffect(() => {
     async function fetchOrderSkus() {
       if (!api?.order?.id) return;
-
+setSkuContractResponse
       try {
-        const res = await fetch(`/api/full-order?orderId=${api.order.id}&shop=${api.shop}`);
+       // const res = await fetch(`https://da-personals-integer-vid.trycloudflare.com/api/full-order?orderId=5520896557140&shop=devdepos.myshopify.com`);
+         const res = await fetch(`/api/full-order?orderId=${api.order.id}&shop=${api.shop}`);
         const data = await res.json();
-
+      setSkuContractResponse(data);
         const extractedSkus = (data?.lineItems || [])
           .map((item) => item?.variant?.sku)
           .filter(Boolean);
@@ -55,17 +61,58 @@ function ContractScreen() {
     })
       .then((res) => res.json())
       .then((data) => {
+       setContractResponse(data)// ✅ Save full response for debug display
         if (data.contract) {
           setContract(data.contract);
         } else {
           setContract(null);
         }
       })
+
       .catch((err) => {
         console.error('Error fetching contract:', err);
         setContract(null);
       });
   }, [skus]);
+
+
+
+if (showDebug && api?.order) {
+  return (
+    <Screen name="Debug" title="Debug Info">
+      <ScrollView padding>
+        <Text size="large">🧾 Order ID: {api.order.id}</Text>
+
+        <Text size="medium">📦 Full Order API Response:</Text>
+        <Text size="small">
+          {contractResponse ? JSON.stringify(contractResponse, null, 2) : 'Waiting...'}
+        </Text>
+
+        <Text size="medium">🎯 Contract-by-SKUs API Response:</Text>
+        <Text size="small">
+          {skuContractResponse ? JSON.stringify(skuContractResponse, null, 2) : 'Waiting...'}
+        </Text>
+
+        <Text size="medium">🛍️ POS Order Object:</Text>
+        <Text size="small">
+          {JSON.stringify(api.order, null, 2)}
+        </Text>
+
+        <Button onPress={() => setShowDebug(false)}>Close Debug</Button>
+      </ScrollView>
+    </Screen>
+  );
+}
+
+
+// Then your normal screen below that
+return (
+  <Screen name="Contract" title="Contract">
+    <ScrollView padding>
+      <Text>aaaaaa.</Text>
+    </ScrollView>
+  </Screen>
+);
 
   // 3. Handle contract submission
   const handleSubmit = async () => {

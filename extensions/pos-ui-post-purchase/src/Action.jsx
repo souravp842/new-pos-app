@@ -1,190 +1,150 @@
 import {
   reactExtension,
-  Text,
-  TextField,
-  Button,
-  ScrollView,
   Screen,
+  ScrollView,
+  Text,
   useApi,
+  Button,
+  RadioButtonList,
 } from '@shopify/ui-extensions-react/point-of-sale';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
-export default reactExtension('pos.purchase.post.action.render', () => <ContractScreen />);
+export default reactExtension('pos.purchase.post.action.render', () => <OrderDetailsScreen />);
 
-function ContractScreen() {
+function OrderDetailsScreen() {
   const api = useApi();
 
-  const [contract, setContract] = useState(null);
-  const [customerName, setCustomerName] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [orderData, setOrderData] = useState(null);
+  const [contractData, setContractData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [skus, setSkus] = useState([]);
- const [showDebug, setShowDebug] = useState(true);
-const [contractResponse, setContractResponse] = useState(null);
-const [skuContractResponse, setSkuContractResponse] = useState(null); // 🆕 for /api/contract-by-skus
+  const [selected, setSelected] = useState('Yes I Agree');
 
+  const isSubmittingRef = useRef(false);
+  const hasFetchedRef = useRef(false);
 
-
-  // 1. Get SKUs from backend via order ID
-  useEffect(() => {
-    async function fetchOrderSkus() {
-      if (!api?.order?.id) return;
-setSkuContractResponse
-      try {
-       // const res = await fetch(`https://da-personals-integer-vid.trycloudflare.com/api/full-order?orderId=5520896557140&shop=devdepos.myshopify.com`);
-         const res = await fetch(`/api/full-order?orderId=${api.order.id}&shop=${api.shop}`);
-        const data = await res.json();
-      setSkuContractResponse(data);
-        const extractedSkus = (data?.lineItems || [])
-          .map((item) => item?.variant?.sku)
-          .filter(Boolean);
-
-        setSkus(extractedSkus);
-        setLoading(false);
-      } catch (err) {
-        console.error('Failed to fetch order details:', err);
-        setLoading(false);
-      }
+  async function handleSubmit(contract) {
+    if (isSubmittingRef.current) {
+      console.warn('Duplicate submission prevented');
+      return;
     }
 
-    fetchOrderSkus();
-  }, [api?.order?.id]);
+    isSubmittingRef.current = true;
 
-  // 2. Fetch matching contract based on SKUs
-  useEffect(() => {
-    if (skus.length === 0) return;
-
-    fetch('/api/contract-by-skus', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skus, shop: api.shop }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-       setContractResponse(data)// ✅ Save full response for debug display
-        if (data.contract) {
-          setContract(data.contract);
-        } else {
-          setContract(null);
-        }
-      })
-
-      .catch((err) => {
-        console.error('Error fetching contract:', err);
-        setContract(null);
-      });
-  }, [skus]);
-
-
-
-if (showDebug && api?.order) {
-  return (
-    <Screen name="Debug" title="Debug Info">
-      <ScrollView padding>
-        <Text size="large">🧾 Order ID: {api.order.id}</Text>
-
-        <Text size="medium">📦 Full Order API Response:</Text>
-        <Text size="small">
-          {contractResponse ? JSON.stringify(contractResponse, null, 2) : 'Waiting...'}
-        </Text>
-
-        <Text size="medium">🎯 Contract-by-SKUs API Response:</Text>
-        <Text size="small">
-          {skuContractResponse ? JSON.stringify(skuContractResponse, null, 2) : 'Waiting...'}
-        </Text>
-
-        <Text size="medium">🛍️ POS Order Object:</Text>
-        <Text size="small">
-          {JSON.stringify(api.order, null, 2)}
-        </Text>
-
-        <Button onPress={() => setShowDebug(false)}>Close Debug</Button>
-      </ScrollView>
-    </Screen>
-  );
-}
-
-
-// Then your normal screen below that
-return (
-  <Screen name="Contract" title="Contract">
-    <ScrollView padding>
-      <Text>aaaaaa.</Text>
-    </ScrollView>
-  </Screen>
-);
-
-  // 3. Handle contract submission
-  const handleSubmit = async () => {
-    if (!customerName || !contract) return;
-
-    setSubmitting(true);
+    if (!contract) {
+      api.toast.show('Contract not available.');
+      isSubmittingRef.current = false;
+      return;
+    }
 
     try {
-      const res = await fetch('/api/save-signed-contract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contractId: contract.id,
-          orderId: api.order.id,
-          customerName,
-          customerEmail: api?.order?.customer?.email || '',
-          signatureData: `Name: ${customerName}`, // If using typed name instead of drawing
-          ipAddress: '', // Optional
-          shop: api.shop,
-        }),
-      });
+      console.log('Submitting contract...');
+      const response = await fetch(
+        `/api/save-signed-contract?orderId=${api.order.id}&shop=${api.session.currentSession.shopDomain}&orderData=${encodeURIComponent(
+          JSON.stringify(orderData)
+        )}&contract=${encodeURIComponent(
+          JSON.stringify(contract)
+        )}&signatureData=${selected}`
+      );
 
-      if (res.ok) {
-        api.done(); // Close extension on success
-      } else {
-        console.error('Failed to save signed contract');
-      }
+      const result = await response.json();
+      console.log('Submission response:', result);
+      api.toast.show('Contract saved!!!');
     } catch (err) {
-      console.error('Submit error:', err);
+      console.error('Error submitting contract:', err);
+      api.toast.show('Failed to save contract.');
     } finally {
-      setSubmitting(false);
+      isSubmittingRef.current = false;
     }
-  };
+  }
 
-  // 4. UI Logic
+  useEffect(() => {
+    async function fetchOrderAndContracts() {
+      if (hasFetchedRef.current) {
+        console.log('Prevented double fetch');
+        return;
+      }
+
+      hasFetchedRef.current = true;
+
+      if (!api?.order?.id || !api?.session?.currentSession?.shopDomain) return;
+
+      try {
+        const orderRes = await fetch(
+          `/api/full-order?orderId=${api.order.id}&shop=${api.session.currentSession.shopDomain}`
+        );
+        const order = await orderRes.json();
+        console.log('Parsed order payload:', order);
+        setOrderData(order);
+
+        const skus = order.lineItems.map((item) => item.variant?.sku).filter(Boolean);
+        const uniqueSkus = [...new Set(skus)];
+        if (uniqueSkus.length === 0) return;
+
+        const contractRes = await fetch(`/api/contract-for-pos?skus=${uniqueSkus.join(',')}`);
+        const contractMappings = await contractRes.json();
+
+        const contractMap = {};
+        for (const mapping of contractMappings) {
+          contractMap[mapping.sku] = mapping.contract;
+        }
+
+        console.log('Received contract object:', contractMap);
+        setContractData(contractMap);
+      } catch (err) {
+        console.error('Error fetching order/contract:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchOrderAndContracts();
+  }, []);
 
   if (loading) {
     return (
-      <Screen name="Contract" title="Loading">
+      <Screen name="Loading" title="Loading">
         <ScrollView padding>
-          <Text>Fetching order details...</Text>
+          <Text>Loading order and contract details...</Text>
         </ScrollView>
       </Screen>
     );
   }
 
-  if (!contract) {
-    return (
-      <Screen name="Contract" title="Contract">
-        <ScrollView padding>
-          <Text>No contract required for this purchase.</Text>
-        </ScrollView>
-      </Screen>
-    );
-  }
+  // 🛑 Use only the FIRST item with a contract (even if duplicates exist)
+  const itemWithContract = orderData?.lineItems?.find(
+    (item) => contractData[item.variant?.sku]
+  );
+
+  const contract = itemWithContract ? contractData[itemWithContract.variant?.sku] : null;
 
   return (
-    <Screen name="Contract" title="Customer Agreement">
+    <Screen name="Order Details" title="Order Details">
       <ScrollView padding>
-        <Text size="large">{contract.name}</Text>
-        <Text>{contract.content}</Text>
+        {itemWithContract && contract ? (
+          <>
+            <Text emphasis="bold">📄 Contract Name:</Text>
+            <Text>{contract.name}</Text>
 
-        <TextField
-          label="Customer Name"
-          value={customerName}
-          onChange={(val) => setCustomerName(val)}
-          disabled={submitting}
-        />
+            <Text emphasis="bold">📜 Contract Content:</Text>
+            <Text>{contract.content}</Text>
 
-        <Button disabled={!customerName || submitting} onPress={handleSubmit}>
-          {submitting ? 'Submitting...' : 'Accept & Submit'}
-        </Button>
+            <RadioButtonList
+              items={['Yes I Agree', `No , I don't`]}
+              onItemSelected={setSelected}
+              initialSelectedItem={selected}
+            />
+
+            {orderData?.customer ? (
+              <Button title="Submit" onPress={() => handleSubmit(contract)} />
+            ) : (
+              <Text style={{ color: 'red', marginTop: 10 }}>
+                ⚠️ You must be logged in as a customer to submit this contract.
+              </Text>
+            )}
+          </>
+        ) : (
+          <Text>No contract found for any item in this order.</Text>
+        )}
       </ScrollView>
     </Screen>
   );

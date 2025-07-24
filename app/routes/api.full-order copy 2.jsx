@@ -3,45 +3,25 @@ import { json } from '@remix-run/node';
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-// ✅ Reusable CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // ✅ For dev; restrict in production
-  'Access-Control-Allow-Headers': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Content-Type': 'application/json',
-};
-
 export async function loader({ request }) {
-  // ✅ Handle CORS preflight
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }
-
   try {
     const url = new URL(request.url);
     const orderId = url.searchParams.get('orderId');
     const shop = url.searchParams.get('shop');
 
     if (!orderId || !shop) {
-      return json(
-        { error: 'Missing orderId or shop' },
-        { status: 400, headers: corsHeaders }
-      );
+      return json({ error: 'Missing orderId or shop' }, { status: 400 });
     }
 
     // 🔐 Get access token for the shop from your Session table
     const session = await prisma.session.findFirst({
-      where: { shop },
+      where: { shop }, // assuming your Prisma model has `shop` and `accessToken`
     });
 
+   // console.log(session, 'session');
+
     if (!session || !session.accessToken) {
-      return json(
-        { error: 'Shop not authenticated' },
-        { status: 403, headers: corsHeaders }
-      );
+      return json({ error: 'Shop not authenticated' }, { status: 403 });
     }
 
     const accessToken = session.accessToken;
@@ -93,10 +73,7 @@ export async function loader({ request }) {
     const data = await response.json();
 
     if (data.errors || !data.data?.order) {
-      return json(
-        { error: 'Failed to fetch order from Shopify', details: data.errors },
-        { status: 502, headers: corsHeaders }
-      );
+      return json({ error: 'Failed to fetch order from Shopify', details: data.errors }, { status: 502 });
     }
 
     const order = data.data.order;
@@ -114,26 +91,17 @@ export async function loader({ request }) {
         : null,
     }));
 
-    console.log("items", lineItems);
 
-    return json(
-      {
-        orderId: order.id,
-        name: order.name,
-        customer: order.customer,
-        lineItems,
-      },
-      {
-        status: 200,
-        headers: corsHeaders,
-      }
-    );
+    console.log(lineItems)
+    return json({
+      orderId: order.id,
+      name: order.name,
+      customer: order.customer,
+      lineItems,
+    });
 
   } catch (error) {
     console.error('Error fetching order:', error);
-    return json(
-      { error: 'Internal server error' },
-      { status: 500, headers: corsHeaders }
-    );
+    return json({ error: 'Internal server error' }, { status: 500 });
   }
 }

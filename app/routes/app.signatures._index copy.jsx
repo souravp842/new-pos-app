@@ -6,8 +6,9 @@ import {
   Badge,
   EmptyState,
   Text,
-  Select,
-  InlineStack
+  Button,
+  InlineStack,
+  Select
 } from '@shopify/polaris';
 
 export default function SignaturesIndex() {
@@ -22,23 +23,13 @@ export default function SignaturesIndex() {
   }, []);
 
   const fetchSignatures = async () => {
-    console.log('Fetching signatures...');
     try {
-      const response = await fetch('/api/signature');
+      // This endpoint will be created in the next step
+      const response = await fetch('/api/contracts');
       const data = await response.json();
-      console.log('Fetched signature data:', data);
-
-      if (Array.isArray(data)) {
-        setSignatures(data);
-      } else if (Array.isArray(data.signedContracts)) {
-        setSignatures(data.signedContracts);
-      } else {
-        console.warn('Expected array but got:', data);
-        setSignatures([]);
-      }
+      setSignatures(data.signatures || []);
     } catch (error) {
       console.error('Error fetching signatures:', error);
-      setSignatures([]);
     } finally {
       setLoading(false);
     }
@@ -58,31 +49,22 @@ export default function SignaturesIndex() {
     { label: 'All Contracts', value: 'all' },
     ...contracts.map(contract => ({
       label: contract.name,
-      value: contract.id.toString(),
-    })),
+      value: contract.id.toString()
+    }))
   ];
 
-  // Filter signatures based on selected contract
-  const filteredSignatures =
-    filterContract === 'all'
-      ? signatures
-      : signatures.filter(
-          signature => signature.contractId.toString() === filterContract
-        );
+  const filteredSignatures = filterContract === 'all' 
+    ? signatures 
+    : signatures.filter(sig => sig.contractId.toString() === filterContract);
 
-  const rows = filteredSignatures.map(signature => {
-    const contract = contracts.find(c => c.id === signature.contractId);
-    return [
-      contract ? contract.name : 'Unknown Contract',
-      signature.customerName || 'Anonymous',
-      signature.customerEmail || 'No email',
-      signature.orderId || 'No order',
-      new Date(signature.signedAt).toLocaleDateString(),
-      <Badge tone={signature.signatureData === 'Yes I Agree' ? 'success' : 'critical'}>
-        {signature.signatureData}
-      </Badge>,
-    ];
-  });
+  const rows = filteredSignatures.map(signature => [
+    signature.contract?.name || 'Unknown Contract',
+    signature.customerName || 'Anonymous',
+    signature.customerEmail || 'No email',
+    signature.orderId || 'No order',
+    new Date(signature.signedAt).toLocaleDateString(),
+    <Badge tone="success">Signed</Badge>
+  ]);
 
   const headings = [
     'Contract',
@@ -90,7 +72,7 @@ export default function SignaturesIndex() {
     'Email',
     'Order ID',
     'Signed Date',
-    'Status',
+    'Status'
   ];
 
   return (
@@ -112,14 +94,21 @@ export default function SignaturesIndex() {
 
         {filteredSignatures.length === 0 && !loading ? (
           <EmptyState
-            heading="No signatures yet"
+            heading="No signatures yett"
             image="https://cdn.shopify.com/s/files/1/0005/4175/0643/files/empty-state.svg"
           >
             <p>When customers sign contracts at checkout, they'll appear here.</p>
           </EmptyState>
         ) : (
           <DataTable
-            columnContentTypes={['text', 'text', 'text', 'text', 'text', 'text']}
+            columnContentTypes={[
+              'text',
+              'text',
+              'text',
+              'text',
+              'text',
+              'text'
+            ]}
             headings={headings}
             rows={rows}
             loading={loading}

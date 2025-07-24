@@ -70,4 +70,7 @@ export default defineConfig({
   optimizeDeps: {
     include: ["@shopify/app-bridge-react", "@shopify/polaris"],
   },
+    ssr: {
+    external: ['nodemailer'], // ✅ Tells Vite to not bundle it
+  },
 });

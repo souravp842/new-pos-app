@@ -36,15 +36,6 @@ export default function NewContract() {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-  const delayDebounce = setTimeout(() => {
-    fetchProducts(inputValue);
-  }, 300); // wait 300ms after typing stops
-
-  return () => clearTimeout(delayDebounce);
-}, [inputValue]);
-
-
   const fetchProducts = async (search = '') => {
     try {
       const response = await fetch(`/api/products?search=${encodeURIComponent(search)}`);
@@ -164,18 +155,18 @@ export default function NewContract() {
             <Text variant="headingMd" as="h3">Link to SKUs</Text>
             <Box paddingBlockStart="200">
               <Autocomplete
-                options={filteredOptions}
-                selected={selectedOptions}
-                onSelect={handleSkuAdd}
-                textField={
-                  <Autocomplete.TextField
-                    label="Search products and variants"
-                    value={inputValue}
-                    onChange={setInputValue}
-                    placeholder="Type to search products..."
-                  />
-                }
-              />
+  options={filteredOptions}
+  selected={selectedOptions}
+  onSelect={handleSkuAdd}
+  textField={
+    <Autocomplete.TextField
+      label="Search products and variants"
+      value={inputValue}
+      onChange={setInputValue}
+      placeholder="Type to search products..."
+    />
+  }
+/>
 
             </Box>
           </Box>

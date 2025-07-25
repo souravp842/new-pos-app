@@ -1,17 +1,20 @@
-// app/routes/api.products.js or api.products.jsx
 import { json } from '@remix-run/node';
 import { authenticate } from '../shopify.server/';
+
 export async function loader({ request }) {
   try {
     const { admin } = await authenticate.admin(request);
     const url = new URL(request.url);
     const search = url.searchParams.get('search') || '';
-    const limit = url.searchParams.get('limit') || '50';
 
     const query = `
-      query getProducts($first: Int!, $query: String) {
-        products(first: $first, query: $query) {
+      query getProducts($first: Int!, $after: String, $query: String) {
+        products(first: $first, after: $after, query: $query) {
+          pageInfo {
+            hasNextPage
+          }
           edges {
+            cursor
             node {
               id
               title
@@ -33,29 +36,42 @@ export async function loader({ request }) {
       }
     `;
 
-    const response = await admin.graphql(query, {
-      variables: {
-        first: parseInt(limit),
-        query: search ? `title:*${search}*` : undefined
-      }
-    });
+    let allProducts = [];
+    let hasNextPage = true;
+    let afterCursor = null;
 
-    const data = await response.json();
+    while (hasNextPage) {
+      const response = await admin.graphql(query, {
+        variables: {
+          first: 250,
+          after: afterCursor,
+          query: search ? `title:*${search}*` : undefined
+        }
+      });
 
-    const products = data.data.products.edges.map(({ node }) => ({
-      id: node.id,
-      title: node.title,
-      handle: node.handle,
-      variants: node.variants.edges.map(({ node: variant }) => ({
-        id: variant.id,
-        title: variant.title,
-        sku: variant.sku,
-        price: variant.price,
-        inventoryQuantity: variant.inventoryQuantity
-      }))
-    }));
+      const data = await response.json();
+      const edges = data.data.products.edges;
 
-    return json({ products });
+      edges.forEach(({ node }) => {
+        allProducts.push({
+          id: node.id,
+          title: node.title,
+          handle: node.handle,
+          variants: node.variants.edges.map(({ node: variant }) => ({
+            id: variant.id,
+            title: variant.title,
+            sku: variant.sku,
+            price: variant.price,
+            inventoryQuantity: variant.inventoryQuantity
+          }))
+        });
+      });
+
+      hasNextPage = data.data.products.pageInfo.hasNextPage;
+      afterCursor = edges.length ? edges[edges.length - 1].cursor : null;
+    }
+
+    return json({ products: allProducts });
   } catch (error) {
     console.error('Error fetching products:', error);
     return json({ error: 'Failed to fetch products' }, { status: 500 });

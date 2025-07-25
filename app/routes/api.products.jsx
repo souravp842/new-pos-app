@@ -7,6 +7,8 @@ export async function loader({ request }) {
     const url = new URL(request.url);
     const search = url.searchParams.get('search') || '';
 
+    console.log('search', search)
+
     const query = `
       query getProducts($first: Int!, $after: String, $query: String) {
         products(first: $first, after: $after, query: $query) {
@@ -45,7 +47,7 @@ export async function loader({ request }) {
         variables: {
           first: 250,
           after: afterCursor,
-          query: search ? `title:*${search}*` : undefined
+          query: search ? `(title:*${search}*) OR (sku:*${search}*)` : undefined
         }
       });
 

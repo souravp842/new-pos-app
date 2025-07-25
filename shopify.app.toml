@@ -3,7 +3,7 @@
 client_id = "151099fbf3be787c0f60401010d0bcf5"
 name = "pos-app"
 handle = "pos-app-66"
-application_url = "https://sv-transit-camcorders-competent.trycloudflare.com"
+application_url = "https://comments-thousands-defined-vermont.trycloudflare.com"
 embedded = true
 
 [build]
@@ -25,7 +25,7 @@ api_version = "2025-07"
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products,read_orders,read_products,write_orders,read_customers,write_customers"
 [auth]
-redirect_urls = ["https://sv-transit-camcorders-competent.trycloudflare.com/auth/callback", "https://sv-transit-camcorders-competent.trycloudflare.com/auth/shopify/callback", "https://sv-transit-camcorders-competent.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://comments-thousands-defined-vermont.trycloudflare.com/auth/callback", "https://comments-thousands-defined-vermont.trycloudflare.com/auth/shopify/callback", "https://comments-thousands-defined-vermont.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false

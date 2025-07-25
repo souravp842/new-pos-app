@@ -39,7 +39,7 @@ export default function NewContract() {
   useEffect(() => {
   const delayDebounce = setTimeout(() => {
     fetchProducts(inputValue);
-  }, 300); // wait 300ms after typing stops
+  }, 10 ); // wait 300ms after typing stops
 
   return () => clearTimeout(delayDebounce);
 }, [inputValue]);
